@@ -11,6 +11,7 @@ class SentenceSimilarity:
         self.seg = seg
         self.cut_sentences = [self.seg.cut_for_search(sentence) for sentence in sentences]
         self.filter_low_frequency_words()
+        assert self.cut_sentences != [], '候选句子不足,无法构建相似度矩阵'
         self.dictionary = corpora.Dictionary(self.cut_sentences)
         self.corpus_simple = [self.dictionary.doc2bow(cut_sentence) for cut_sentence in self.cut_sentences]
         self.model, self.index = self.create_model(model_type)
@@ -40,7 +41,7 @@ class SentenceSimilarity:
         else:
             model = models.TfidfModel(self.corpus_simple)
         corpus = model[self.corpus_simple]
-        index = similarities.MatrixSimilarity(corpus)
+        index = similarities.MatrixSimilarity(corpus, num_features=len(self.dictionary))
         return model, index
 
     def similarity_k(self, sentence, k):

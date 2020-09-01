@@ -75,7 +75,11 @@ class RecallModel:
         # 利用关键词匹配得到与原来相似的问题集合
         filter_question_list, filter_answer_list = self.filter_question_by_invert_table(question, task)
         # 初始化模型
-        sim = SentenceSimilarity(self.seg, filter_question_list, model_type='tf_idf')
-        question_results_k = sim.similarity_k(question, top_k)
+        try:
+            sim = SentenceSimilarity(self.seg, filter_question_list, model_type='tf_idf')
+        except AssertionError:
+            question_results_k, filter_question_list, filter_answer_list = [], [], []
+        else:
+            question_results_k = sim.similarity_k(question, top_k)
         return question_results_k, filter_question_list, filter_answer_list
 

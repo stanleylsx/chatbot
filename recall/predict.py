@@ -13,7 +13,10 @@ if __name__ == '__main__':
             break
         time1 = time.time()
         question_k, question_list_s, answer_list_s = recall.recall(question, 5, task='chat')
-        print("亲，我们给您找到的答案是： {}".format(answer_list_s[question_k[0][0]]))
+        if not question_k:
+            print('亲，我不明白您说的什么')
+            continue
+        print('亲，我们给您找到的答案是： {}'.format(answer_list_s[question_k[0][0]]))
         for idx, score in zip(*question_k):
             print("same questions： {},                score： {}".format(question_list_s[idx], score))
         time2 = time.time()
