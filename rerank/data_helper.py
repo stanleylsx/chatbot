@@ -16,7 +16,7 @@ def load_embedding(dstPath, embedding_size, vocab_file):
 
     embed_dic = {}
     count = 0
-    with open(dstPath, 'r', encoding='utf-8') as fin:
+    with open(dstPath, 'r', encoding='unicode_escape') as fin:
         for line in fin:
             try:
                 count +=1

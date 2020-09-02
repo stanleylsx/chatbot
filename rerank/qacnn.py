@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/5/25 16:08
-# @Author  : Alan
-# @Email   : xiezhengwen2013@163.com
-# @File    : QACNN_CAIL2.py
-# @Software: PyCharm
-
-
 import time
 import logging
 import warnings
@@ -20,7 +12,7 @@ from copy import deepcopy
 stdout = sys.stdout
 
 from .data_helper import *
-from .data_preprocess2 import *
+from .data_preprocess import *
 from .model import SiameseQACNN
 from .model_utils import *
 from .metrics import *

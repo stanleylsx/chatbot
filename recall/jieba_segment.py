@@ -2,13 +2,13 @@ import jieba
 import re
 
 
-class Seg:
+class Segment:
     """
     结巴分词封装api
     """
-    def __init__(self):
+    def __init__(self, stop_word_path):
         self.stopwords = set()
-        self.stopword_filepath = '../data/stopwords/stopwords.txt'
+        self.stopword_filepath = stop_word_path
         self.read_in_stopword()
 
     @staticmethod

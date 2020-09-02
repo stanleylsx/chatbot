@@ -2,17 +2,6 @@ import tensorflow as tf
 import numpy as np
 
 
-def print_shape(varname, var):
-    """
-    :param varname: tensor name
-    :param var: tensor variable
-    """
-    try:
-        print('{0} : {1}'.format(varname, var.get_shape()))
-    except:
-        print('{0} : {1}'.format(varname, np.shape(var)))
-
-
 # count the number of trainable parameters in model
 def count_parameters():
     totalParams = 0

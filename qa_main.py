@@ -1,6 +1,7 @@
 import time
 from rerank.data_helper import *
-from recall import recall_model
+from recall.recall_model import RecallModel
+from recall.jieba_segment import Segment
 from rerank import rerank_model
 
 
@@ -9,10 +10,16 @@ class SmartQA:
         self.top_k = 5
         self.min_sim = 0.25
         self.max_sim = 0.90
-        self.embeding_size = 200
-        self.vocab_file = '../data/qa_corpus/project-data/word_vocab.txt'
-        self.embed_file = '../data/word2vec/70000-small.txt'
-        self.embedding = load_embedding(self.embed_file, self.embeding_size, self.vocab_file)
+        self.embedding_size = 200
+        stop_words_path = './data/stopwords/stopwords.txt'
+        faq_corpus_path = './data/qa_corpus/faq/liantongzhidao_faq.csv'
+        chat_corpus_path = './data/qa_corpus/chat/xiaohuangji_chat.csv'
+        self.segment = Segment(stop_words_path)
+        self.segment.load_userdict('./data/userdict/userdict.txt')
+        self.recall = RecallModel(self.segment, faq_corpus_path=faq_corpus_path, chat_corpus_path=chat_corpus_path)
+        self.vocab_file = './data/qa_corpus/project-data/word_vocab.txt'
+        self.embed_file = './data/word2vec/70000-small.txt'
+        self.embedding = load_embedding(self.embed_file, self.embedding_size, self.vocab_file)
 
     '''问答主函数'''
     # 分为 recall + rerank 2个部分
@@ -21,19 +28,19 @@ class SmartQA:
     #   2. min_sim < recall_score < max_sim， 进行 recall + rerank
     #   3. recall_score > max_sim，只进行recall，直接得出答案
     # TODO 把问答对字典化，提升寻址速度
-    def search_main(self, question, task='faq'):
+    def search_main(self, question, task):
         # 粗排
-        candi_questions, questionList, answerList = recall_model.main(question, self.top_k, task)
+        question_k, question_list_s, answer_list_s = self.recall.recall(question, 5, task)
         answer_dict = {}
         corpus = []
         indxs = []
         matchmodel_simscore = []
         sim_questions = []
 
-        for indx, candi in zip(*candi_questions):
+        for ind, candi in zip(*question_k):
             # 如果在粗排阶段就已经找到了非常相似的问题，则马上返回这个答案,终止循环
             if candi > self.max_sim:
-                indxs.append(indx)
+                indxs.append(ind)
                 break
             else:
                 # 如果召回的数据噪声很大，不做精确匹配
@@ -43,19 +50,19 @@ class SmartQA:
                     # 因为对话语句比较短，所以不做限制
                     if task == 'chat':
                         matchmodel_simscore.append(candi)
-                        corpus.append((question, questionList[indx]))
-                        indxs.append(indx)
-                        sim_questions.append(questionList[indx])
+                        corpus.append((question, question_list_s[ind]))
+                        indxs.append(ind)
+                        sim_questions.append(question_list_s[ind])
                         break
                     else:
                         continue
                 matchmodel_simscore.append(candi)
-                corpus.append((question, questionList[indx]))
-                indxs.append(indx)
-                sim_questions.append(questionList[indx])
+                corpus.append((question, question_list_s[ind]))
+                indxs.append(ind)
+                sim_questions.append(question_list_s[ind])
         if len(indxs) == 1:
-            sim = [questionList[indx] for indx, candi in zip(*candi_questions)]
-            return answerList[indxs[0]], sim
+            sim = [question_list_s[indx] for indx, candi in zip(*question_k)]
+            return answer_list_s[indxs[0]], sim
         else:
             # 精确匹配
             if len(indxs) != 0:
@@ -63,12 +70,12 @@ class SmartQA:
             else:
                 return '您好，暂时无法解决这个问题，请您稍等，正在为您转接人工客服.....'
             final = list(zip(indxs, matchmodel_simscore, deepmodel_simscore))
-            for id, score1, score2 in final:
+            for ind, score1, score2 in final:
                 final_score = (score1 + score2) / 2
-                answer_dict[id] = final_score
+                answer_dict[ind] = final_score
             if answer_dict:
                 answer_dict = sorted(answer_dict.items(), key=lambda asd: asd[1], reverse=True)
-                final_answer = answerList[answer_dict[0][0]]
+                final_answer = answer_list_s[answer_dict[0][0]]
             else:
                 final_answer = '您好，暂时无法解决这个问题，请您稍等，正在为您转接人工客服....'
             return final_answer, sim_questions
@@ -78,7 +85,7 @@ def route(task):
     if task == 'chat':
         print('hello，欢迎来到闲聊模式！我是人见人爱的小天哦, 很高兴见到你！')
         print('==== 提示：如果想要转换成家居咨询模式，请输入 faq ====')
-        while(1):
+        while True:
             question = input('主人说: \n')
             if question == 'end':
                 print('byebye~ 小天期待和你下次再见哦！')
@@ -118,7 +125,7 @@ def route(task):
     elif task == 'faq':
         print('hello，欢迎来到家居咨询模式！我是您的助理小天')
         print('==== 提示：如果想要转换成闲聊模式，请输入 chat ====')
-        while(1):
+        while True:
             question = input('您提问的问题: \n')
             if question == 'end':
                 print('byebye~ 小天期待和您下次再见！')
@@ -132,7 +139,7 @@ def route(task):
             try:
                 if question == 'chat':
                     break
-                final_answer, sim_questions = handler.search_main(question)
+                final_answer, sim_questions = handler.search_main(question, 'faq')
                 s2 = time.time()
                 print('小天为您找到的答案:', final_answer)
                 print('小天觉得您还可能对以下问题感兴趣！')

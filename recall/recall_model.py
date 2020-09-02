@@ -6,9 +6,7 @@ class RecallModel:
     """
     召回池
     """
-    def __init__(self, seg):
-        faq_corpus_path = '../data/qa_corpus/faq/liantongzhidao_faq.csv'
-        chat_corpus_path = '../data/qa_corpus/chat/xiaohuangji_chat.csv'
+    def __init__(self, seg, faq_corpus_path, chat_corpus_path):
         self.seg = seg
         faq_question_list_kw, self.faq_question_list, self.faq_answer_list = self.read_corpus(faq_corpus_path)
         chat_question_list_kw, self.chat_question_list, self.chat_answer_list = self.read_corpus(chat_corpus_path)

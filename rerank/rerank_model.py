@@ -1,7 +1,7 @@
 import warnings
 import os
 from .data_helper import *
-from .data_preprocess2 import *
+from .data_preprocess import *
 from .model import SiameseQACNN
 from .model_utils import *
 from .metrics import *
